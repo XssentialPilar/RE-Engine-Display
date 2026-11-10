@@ -4,7 +4,7 @@ A separate display adaptation project targeting **Resident Evil 7**, **Resident 
 
 ## Current candidate
 
-`3.0.0-preview.6` is an **RE7 screen and interface correction candidate**. It is not a completed release. Previews 4 and 5 failed the user's multi-resolution test and must not be treated as stable.
+`3.0.0-preview.7` is an **RE7 screen and interface correction candidate**. It is not a completed release. Previews 4 and 5 failed the user's multi-resolution test and must not be treated as stable.
 
 - **Native camera protection.** Automatic mode performs no camera writes. Direct camera aspect and projection-axis overrides have been removed; changing a 4:3 or 16:9 camera to the monitor's 16:10 aspect at render boundaries was an unsafe mismatch with the engine's projection and temporal data. Manual FOV remains an explicit horizontal-angle setting; leave it off during regression testing. Render-target sizes, lighting, shadows and shaders are not modified.
 - **Independent presentation target.** Preview 5 selected the aspect from a scene surface that its own display setting had changed. That feedback could keep a 1920×1200 output letterboxed at 1920×1080. Preview 6 selects the native display preset from the actual DXGI output buffer, with the native window as a fallback. The monitor's desktop resolution is not used as a substitute. Exact supported ratios use native proportional presets; other ratios use native Fit and remain unverified in game. Scene size and the present rectangle are observations, never inputs that can shrink the presentation target.
@@ -25,7 +25,7 @@ During a separate test with both REFramework and REDisplay disabled, the user fo
 Requires an existing compatible REFramework host with plugin API 1.15 or later. The loader is not bundled or replaced.
 
 1. Close RE7 normally. Extract the ZIP's `reframework` folder into the directory containing `re7.exe`. When upgrading, keep your existing `reframework/data/REDisplay.ini` if you wish to retain settings. The source project's `tools/REDisplay.Install.ps1 -GamePath <game directory> -KeepSettings` also preserves exact prior files in a timestamped backup.
-2. Open RE7 and confirm **3.0.0-preview.6** in the plugin panel, opened with `;` or through REFramework.
+2. Open RE7 and confirm **3.0.0-preview.7** in the plugin panel, opened with `;` or through REFramework.
 3. Enable display correction, adaptive interface and full-screen backgrounds. Leave FOV override off for the comparison. Keep REFramework's separate ultrawide correction off to avoid competing layout policies.
 4. Check inventory grid boundaries, item movement, pointer alignment and click targets; ammunition, interaction and autosave icons; pause, load/save and Options backgrounds; and the bottom help guide.
 5. Load a save to check the native loading indicator, then play an introductory video and compare subtitles. Test your available windowed, borderless and fullscreen output modes and more than one aspect ratio.
