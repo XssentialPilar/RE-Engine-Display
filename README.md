@@ -1,47 +1,84 @@
-# RE Engine Display Fix — 3.0.0 development
+# RE Engine Display Fix
 
-A separate display adaptation project targeting **Resident Evil 7**, **Resident Evil 2 Remake**, and **Resident Evil 3 Remake**. RE7 is the runtime test target. RE2 and RE3 remain unverified.
+### A better fit for the Resident Evil experience.
 
-## Current candidate
+**RE Engine Display Fix** is a display and interface adaptation project for **Resident Evil 7: Biohazard**, **Resident Evil 2 Remake**, and **Resident Evil 3 Remake**. Its goal is simple: make the image, menus, cinematics, and on-screen information feel properly proportioned on different displays—without compromising the game's original presentation.
 
-`3.0.0-preview.7` is an **RE7 screen and interface correction candidate**. It is not a completed release. Previews 4 and 5 failed the user's multi-resolution test and must not be treated as stable.
+**Current development preview:** `3.0.0-preview.7`  
+**Tested game:** Resident Evil 7  
+**Resident Evil 2 and 3 Remakes:** Not yet verified
 
-- **Native camera protection.** Automatic mode performs no camera writes. Direct camera aspect and projection-axis overrides have been removed; changing a 4:3 or 16:9 camera to the monitor's 16:10 aspect at render boundaries was an unsafe mismatch with the engine's projection and temporal data. Manual FOV remains an explicit horizontal-angle setting; leave it off during regression testing. Render-target sizes, lighting, shadows and shaders are not modified.
-- **Independent presentation target.** Preview 5 selected the aspect from a scene surface that its own display setting had changed. That feedback could keep a 1920×1200 output letterboxed at 1920×1080. Preview 6 selects the native display preset from the actual DXGI output buffer, with the native window as a fallback. The monitor's desktop resolution is not used as a substitute. Exact supported ratios use native proportional presets; other ratios use native Fit and remain unverified in game. Scene size and the present rectangle are observations, never inputs that can shrink the presentation target.
-- **Shared coordinates for screen interfaces.** Ordinary menu, HUD and inventory views use a uniform virtual canvas based on the observed presentation rectangle. One root resolution transform supplies the same uniform scale to drawing and native coordinate conversion, including lower resolutions. Nested stretch adjustments are neutralized. Settled conversion measurements validate the result without feeding stale conversion caches back into the layout.
-- **Independent placement and backgrounds.** Inventory grid, item icons, drag imagery and selection use the same right/top basis, including the previously omitted icon container. Objectives and autosave use the actual top/left canvas; ammunition and guides use their own edge anchors. Solid footer bands can fill the width independently of their controls. Full-screen solid/blur layers fill the output; textured menu backgrounds cover it with uniform scaling and centered cropping. Background expansion does not resize sibling text, icons or buttons.
-- **Native loading activity.** This candidate no longer vetoes the loading indicator draw callback. The indicator is promoted to an overlay while the captured chapter artwork is visible. Loading progress and save state remain game-owned; actual loading and cinematic transitions require the next runtime check.
-- **Proportional videos.** The preview 2 video policy is retained: cover by default, optional contain framing, and decoded dimensions when an attached native movie component exposes them. Cover can crop edges; contain can leave bars. Neither mode stretches the picture.
-- **Native input and specialized views.** The mouse canvas, world-space tape-recorder menu and wrist-monitor render-to-texture canvas retain their specialized native behavior. Ordinary 2D corrections must not be applied to offscreen or world-space displays.
-- **Reversible settings.** Changed-only property setters, ownership-based restoration, reset defaults, actual DX11/DX12 backbuffer detection and debounced configuration persistence remain available.
-- **Animation-safe placement.** Ownership is tracked separately for each position and size component. A native animation that changes one axis can no longer capture an already shifted second axis as a new baseline and repeatedly accumulate its offset. Disabling the correction restores owned components while retaining independent native animation changes.
+> **Development preview:** The latest RE7 candidate has been tested and accepted for its visible improvements, with minor corrections still planned. It is **not** the final 3.0.0 release.
 
-The user confirmed improved video framing and subtitle proportions in preview 2. Later previews still failed inventory alignment and resolution changes. Preview 6 addresses two reproducible code defects: presentation feedback and accumulated placement offsets. Complete inventory alignment, loading visibility, video transitions and arbitrary-ratio behavior still require runtime acceptance. Mathematical checks do not establish universal game compatibility. Generated replacement artwork is not bundled or installed.
+## See the difference
 
-During a separate test with both REFramework and REDisplay disabled, the user found that the lighting defect persists when RE7 ray tracing is disabled. This candidate focuses on display geometry; it does not claim to repair that native rendering issue. Keep graphics settings unchanged during the screen comparison.
+<img width="4000" height="6066" alt="REDisplay_3 0 0-preview 7_RE7_Gallery_20261110_001549" src="https://github.com/user-attachments/assets/3463d464-f863-424d-84c2-c10fd0b48213" />
 
-## Install and test in RE7
 
-Requires an existing compatible REFramework host with plugin API 1.15 or later. The loader is not bundled or replaced.
 
-1. Close RE7 normally. Extract the ZIP's `reframework` folder into the directory containing `re7.exe`. When upgrading, keep your existing `reframework/data/REDisplay.ini` if you wish to retain settings. The source project's `tools/REDisplay.Install.ps1 -GamePath <game directory> -KeepSettings` also preserves exact prior files in a timestamped backup.
-2. Open RE7 and confirm **3.0.0-preview.7** in the plugin panel, opened with `;` or through REFramework.
-3. Enable display correction, adaptive interface and full-screen backgrounds. Leave FOV override off for the comparison. Keep REFramework's separate ultrawide correction off to avoid competing layout policies.
-4. Check inventory grid boundaries, item movement, pointer alignment and click targets; ammunition, interaction and autosave icons; pause, load/save and Options backgrounds; and the bottom help guide.
-5. Load a save to check the native loading indicator, then play an introductory video and compare subtitles. Test your available windowed, borderless and fullscreen output modes and more than one aspect ratio.
-6. Close the game normally when finished. With diagnostics enabled, the log distinguishes the independent presentation target from the native game surface, and records preset changes, present rectangles, GUI conversions and settled transform metrics. These are diagnostic observations, not a claim that a screenshot passed visual inspection.
+*Resident Evil 7 in-game captures (1920 × 1200, 16:10). The gallery highlights improvements to cinematic framing, subtitles, menus, inventory, map and HUD placement. Images show one tested output, not proof of compatibility with every display.*
 
-The installer does not alter executable files, saves, REFramework settings, DirectX runtimes or RE8 modules. Keep the previous candidate until the new behavior has been checked.
+## What makes it different?
 
-## Build and package
+### An image that keeps its shape
 
-From the full source project: Windows x64, Visual Studio C++ tools, Windows SDK and CMake:
+Screen changes should never leave characters, environments, or interface elements looking stretched. RE Engine Display Fix improves how the game adapts its presentation to the selected output while respecting its native camera behavior.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File tools/REDisplay.Build.ps1
-powershell -ExecutionPolicy Bypass -File tools/REDisplay.Package.ps1
-```
+### Menus that belong on your screen
 
-The scripts default to Visual Studio 2026; pass `-Generator 'Visual Studio 17 2022'` if needed. Sources, configuration, tools and verification evidence are separated under `native/`, `config/`, `tools/`, `tests/`, `docs/` and `artifacts/`; distributable ZIPs are under `dist/`. The package script checks build and source hashes before packaging.
+Pause, Options and other everyday interfaces receive proportional sizing and more consistent placement. Backgrounds can fill the screen without forcing the controls, labels or buttons to stretch with them.
 
-The source derives from RE8Display 2.7.0 with attribution in LICENSE. Vendored REFramework API headers retain their upstream attribution. No game artwork or Microsoft preview runtime is bundled. Agility, DirectStorage, water changes, fog and enemy culling are outside this adaptation candidate.
+### A more consistent HUD and inventory
+
+Inventory slots, item icons, selection elements, maps, objectives, interaction prompts and bottom guides are brought into a more coherent screen layout. Earlier builds could display these elements flattened, clipped or separated from their intended positions; this preview substantially improves those results in RE7.
+
+### Cinematics that preserve their presentation
+
+Video framing and subtitle proportions have been improved, with proportional presentation retained through the project's video policy. Some scenes may crop at the edges or show unused space depending on the chosen framing mode; the video itself is not intentionally stretched.
+
+### Your game, your settings
+
+Display and interface corrections can be enabled or disabled. Optional manual FOV control is available separately, while automatic correction avoids rewriting the native camera projection.
+
+## Game compatibility
+
+| Game | Current status |
+| --- | --- |
+| **Resident Evil 7: Biohazard** | **Preview tested and accepted**; minor issues may remain |
+| **Resident Evil 2 Remake** | Targeted, but **not tested or verified** |
+| **Resident Evil 3 Remake** | Targeted, but **not tested or verified** |
+
+RE7 is the current testing and development focus. Similar engine technology does **not** guarantee that the same corrections work safely in RE2 or RE3. Their compatibility will be announced only after dedicated runtime testing.
+
+## Installation — Resident Evil 7
+
+1. Close Resident Evil 7.
+2. Download the current **RE Engine Display Fix** preview ZIP from this repository's **Releases** section.
+3. Extract the ZIP's **`reframework`** **`dinput8`** folder and file into the game's installation directory, alongside **`re7.exe`**. If upgrading, preserve your existing **`reframework/data/REDisplay.ini`** to retain settings.
+4. Launch RE7 and open the plugin panel using **`;`** or the REFramework interface. Confirm **`3.0.0-preview.7`** appears.
+5. Make sure you have enabled **Display Correction**, **Adaptive Interface** and **Full-Screen Backgrounds**. For the initial comparison, leave **Manual FOV Override** disabled and turn off REFramework's separate ultrawide correction to avoid conflicting adjustments.
+
+No game executable, save file or DirectX runtime needs to be replaced by this installer.
+
+## What is still being worked on?
+
+- Further refinement of inventory interactions, overlays, loading sequences and less common menus.
+- Dedicated support verification for Resident Evil 2 and Resident Evil 3 Remakes.
+- Ongoing adjustments based on reproducible community reports.
+
+## Feedback and issue reports
+
+If something looks wrong, please open a GitHub Issue and include:
+
+- Game and game version/build, if known.
+- Screen resolution, aspect ratio and display mode (windowed, borderless or fullscreen).
+- A screenshot or short video of the affected menu, HUD element or scene.
+- Whether other display or ultrawide fixes were enabled.
+
+Precise reports make it easier to reproduce problems and improve the next preview. **Thank you for helping make RE Engine Display Fix better.**
+
+## Project notes and credits
+
+RE Engine Display Fix is a separate adaptation project, developed from **RE8Display 2.7.0** with attribution recorded in **LICENSE**. It uses the separately installed **REFramework** host and retains attribution for its vendored API headers.
+
+The project does not bundle copyrighted game artwork, modified game executables, or REFramework itself. Resident Evil and RE Engine belong to their respective owners. This is an independent, unofficial community project and is not affiliated with or endorsed by Capcom.
